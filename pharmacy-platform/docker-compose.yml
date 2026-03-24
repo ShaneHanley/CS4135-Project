@@ -1,0 +1,31 @@
+services:
+  gateway-service:
+    build: ./gateway-service
+    ports: ["8080:8080"]
+    env_file: .env
+    depends_on:
+      - auth-service
+      - prescription-service
+      - pharmacy-service
+  auth-service: { build: ./auth-service, ports: ["8081:8081"], env_file: .env }
+  prescription-service: { build: ./prescription-service, ports: ["8082:8082"], env_file: .env }
+  pharmacy-service: { build: ./pharmacy-service, ports: ["8083:8083"], env_file: .env }
+  notification-service:
+    build: ./notification-service
+    ports: ["8088:8080"]
+    env_file: .env
+    environment:
+      SPRING_DATASOURCE_URL: ${SUPABASE_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${SUPABASE_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${SUPABASE_DB_PASSWORD}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      SENDGRID_FROM_EMAIL: ${SENDGRID_FROM_EMAIL}
+  web-frontend:
+    build: ./web-frontend
+    ports: ["3000:3000"]
+    env_file: .env
+    depends_on:
+      - gateway-service
