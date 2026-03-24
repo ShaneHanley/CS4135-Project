@@ -1,0 +1,23 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: prescription-service
+  datasource:
+    url: ${SUPABASE_DB_URL}
+    username: ${SUPABASE_DB_USER}
+    password: ${SUPABASE_DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.default_schema: prescription_svc
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    url: ${SUPABASE_MIGRATION_URL}
+    user: ${SUPABASE_DB_USER}
+    password: ${SUPABASE_DB_PASSWORD}
+    schemas: prescription_svc
+    default-schema: prescription_svc
+    locations: classpath:db/migration

@@ -1,0 +1,1 @@
+import { Navigate } from 'react-router-dom';import { useSelector } from 'react-redux';export default function RoleRoute({roles, children}){ const role = useSelector(s=>s.auth.user?.role); return roles.includes(role) ? children : <Navigate to='/unauthorized' replace/>; }

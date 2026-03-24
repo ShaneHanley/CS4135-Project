@@ -1,0 +1,80 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f6f8fb;
+  color: #1f2937;
+}
+
+a {
+  color: #1d4ed8;
+  text-decoration: none;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #111827;
+  color: #fff;
+}
+
+.nav-links {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.nav-links a {
+  color: #bfdbfe;
+}
+
+.container {
+  width: min(1100px, 95vw);
+  margin: 1rem auto;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+input, select, textarea, button {
+  font: inherit;
+  padding: 0.5rem;
+}
+
+table {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+}
+
+th, td {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.error-banner {
+  margin: 0.5rem 0;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+}
