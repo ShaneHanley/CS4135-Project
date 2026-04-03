@@ -3,7 +3,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pharmacy.pharmacy.entity.PharmacyPrescription;
 import com.pharmacy.pharmacy.entity.PharmacyPrescriptionStatus;
-import com.pharmacy.pharmacy.messaging.PgmqService;
+import com.pharmacy.messaging.PgmqService;
 import com.pharmacy.pharmacy.repository.PharmacyPrescriptionRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;

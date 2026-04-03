@@ -2,7 +2,7 @@ package com.pharmacy.prescription.service;
 import com.pharmacy.prescription.dto.PrescriptionDtos;
 import com.pharmacy.prescription.entity.Prescription;
 import com.pharmacy.prescription.entity.PrescriptionStatus;
-import com.pharmacy.prescription.messaging.PgmqService;
+import com.pharmacy.messaging.PgmqService;
 import com.pharmacy.prescription.repository.PrescriptionRepository;
 import org.springframework.stereotype.Service;
 import java.util.*;
