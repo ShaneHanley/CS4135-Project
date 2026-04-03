@@ -1,0 +1,22 @@
+server:
+  port: 8085
+spring:
+  application:
+    name: inventory-service
+  datasource:
+    url: ${SUPABASE_DB_URL}
+    username: ${SUPABASE_DB_USER}
+    password: ${SUPABASE_DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.default_schema: inventory_svc
+  flyway:
+    enabled: true
+    url: ${SUPABASE_MIGRATION_URL}
+    user: ${SUPABASE_DB_USER}
+    password: ${SUPABASE_DB_PASSWORD}
+    schemas: inventory_svc
+    default-schema: inventory_svc
+    locations: classpath:db/migration

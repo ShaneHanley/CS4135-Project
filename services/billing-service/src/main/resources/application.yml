@@ -1,0 +1,22 @@
+server:
+  port: 8086
+spring:
+  application:
+    name: billing-service
+  datasource:
+    url: ${SUPABASE_DB_URL}
+    username: ${SUPABASE_DB_USER}
+    password: ${SUPABASE_DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.default_schema: billing_svc
+  flyway:
+    enabled: true
+    url: ${SUPABASE_MIGRATION_URL}
+    user: ${SUPABASE_DB_USER}
+    password: ${SUPABASE_DB_PASSWORD}
+    schemas: billing_svc
+    default-schema: billing_svc
+    locations: classpath:db/migration
