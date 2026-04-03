@@ -1,6 +1,6 @@
 package com.pharmacy.inventory.controller;
 import com.pharmacy.inventory.common.ApiResponse;
-import com.pharmacy.inventory.messaging.PgmqService;
+import com.pharmacy.messaging.PgmqService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

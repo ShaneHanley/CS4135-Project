@@ -1,6 +1,6 @@
 package com.pharmacy.analytics.controller;
 import com.pharmacy.analytics.common.ApiResponse;
-import com.pharmacy.analytics.messaging.PgmqService;
+import com.pharmacy.messaging.PgmqService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
