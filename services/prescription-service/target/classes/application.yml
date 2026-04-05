@@ -21,3 +21,17 @@ spring:
     schemas: prescription_svc
     default-schema: prescription_svc
     locations: classpath:db/migration
+
+app:
+  messaging:
+    prescription-queue: ${PRESCRIPTION_QUEUE:prescription_submitted}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.pharmacy.prescription: DEBUG
