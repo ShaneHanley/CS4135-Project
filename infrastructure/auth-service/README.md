@@ -35,6 +35,8 @@ Port: `8081`
 
 ## Endpoints
 
+Invalid login credentials return **401** with error code `UNAUTHORIZED` (see `InvalidCredentialsException` handling).
+
 | Method | Path | Auth |
 |--------|------|------|
 | POST | `/api/auth/register` | Public |
