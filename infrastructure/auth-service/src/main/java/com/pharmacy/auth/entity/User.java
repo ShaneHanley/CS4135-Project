@@ -9,6 +9,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -20,12 +22,16 @@ public class User {
     private UUID id;
 
     @Column(nullable = false)
+    @Size(max = 100)
     private String firstName;
 
     @Column(nullable = false)
+    @Size(max = 100)
     private String lastName;
 
     @Column(nullable = false, unique = true)
+    @Email
+    @Size(max = 255)
     private String email;
 
     @Column(nullable = false)
@@ -58,6 +64,10 @@ public class User {
 
     public UUID getId() {
         return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
     }
 
     public String getFirstName() {
