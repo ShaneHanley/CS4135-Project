@@ -1,5 +1,14 @@
 server:
   port: 8081
+
+jwt:
+  access-token-ttl-seconds: ${JWT_ACCESS_TOKEN_TTL:900}
+  refresh-token-ttl-seconds: ${JWT_REFRESH_TOKEN_TTL:604800}
+
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ORIGINS:http://localhost:3000}
+
 spring:
   application:
     name: auth-service
