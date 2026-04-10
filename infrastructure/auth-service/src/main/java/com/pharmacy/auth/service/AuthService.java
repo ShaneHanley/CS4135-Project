@@ -2,8 +2,13 @@ package com.pharmacy.auth.service;
 
 import com.pharmacy.auth.dto.AuthDtos;
 import com.pharmacy.auth.entity.User;
+import com.pharmacy.auth.exception.DuplicateEmailException;
+import com.pharmacy.auth.exception.InvalidCredentialsException;
+import com.pharmacy.auth.exception.InvalidRefreshTokenException;
+import com.pharmacy.auth.exception.UserNotFoundException;
 import com.pharmacy.auth.repository.UserRepository;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import java.util.Locale;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,7 +28,7 @@ public class AuthService {
     public AuthDtos.UserView register(AuthDtos.RegisterRequest request) {
         String normalizedEmail = request.email().toLowerCase(Locale.ROOT);
         userRepository.findByEmail(normalizedEmail).ifPresent(u -> {
-            throw new IllegalArgumentException("Email already registered");
+            throw new DuplicateEmailException("Email already registered");
         });
         User user = new User();
         user.setFirstName(request.firstName());
@@ -37,9 +42,9 @@ public class AuthService {
 
     public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request) {
         User user = userRepository.findByEmail(request.email().toLowerCase(Locale.ROOT))
-                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
         if (!user.isActive() || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new IllegalArgumentException("Invalid email or password");
+            throw new InvalidCredentialsException("Invalid email or password");
         }
         return new AuthDtos.AuthResponse(
                 jwtService.generateAccessToken(user),
@@ -49,10 +54,15 @@ public class AuthService {
     }
 
     public AuthDtos.AuthResponse refresh(AuthDtos.RefreshRequest request) {
-        Claims claims = jwtService.parse(request.refreshToken());
+        Claims claims;
+        try {
+            claims = jwtService.parse(request.refreshToken());
+        } catch (JwtException e) {
+            throw new InvalidRefreshTokenException("Invalid or expired refresh token");
+        }
         String email = claims.getSubject();
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid refresh token"));
+                .orElseThrow(() -> new InvalidRefreshTokenException("Invalid refresh token"));
         return new AuthDtos.AuthResponse(
                 jwtService.generateAccessToken(user),
                 jwtService.generateRefreshToken(user),
@@ -62,7 +72,7 @@ public class AuthService {
 
     public AuthDtos.UserView me(String email) {
         User user = userRepository.findByEmail(email.toLowerCase(Locale.ROOT))
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
         return toUserView(user);
     }
 
