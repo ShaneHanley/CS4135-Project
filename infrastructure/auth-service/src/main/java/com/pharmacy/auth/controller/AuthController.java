@@ -5,6 +5,7 @@ import com.pharmacy.auth.dto.AuthDtos;
 import com.pharmacy.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,14 +41,23 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Logout")
     public ApiResponse<String> logout() {
         return ApiResponse.ok("ok", "Logged out");
     }
 
     @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Me")
     public ApiResponse<AuthDtos.UserView> me(Authentication authentication) {
         return ApiResponse.ok(authService.me(authentication.getName()), "Current user");
+    }
+
+    @GetMapping("/admin/ping")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Admin-only health probe (RBAC demo)")
+    public ApiResponse<String> adminPing() {
+        return ApiResponse.ok("ok", "Admin access granted");
     }
 }
