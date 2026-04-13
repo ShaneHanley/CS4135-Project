@@ -58,14 +58,35 @@ public class PharmacyService {
     p.setStatus(next); p.setRejectionReason(rejectionReason);
     PharmacyPrescription saved = repository.save(p);
     Map<String,Object> payload = new LinkedHashMap<>();
-    payload.put("prescriptionId", saved.getPrescriptionId().toString());
-    payload.put("patientId", saved.getPatientId());
-    payload.put("patientEmail", saved.getPatientEmail());
-    payload.put("patientName", saved.getPatientName());
-    payload.put("newStatus", saved.getStatus().name());
-    payload.put("rejectionReason", saved.getRejectionReason());
-    payload.put("pharmacyName", "Central Pharmacy");
-    pgmqService.sendMessage("notification_prescription_status", payload);
+    payload.put("channel", "email");
+    payload.put("type", switch (saved.getStatus()) {
+      case PROCESSING       -> "processing";
+      case READY_FOR_PICKUP -> "collect";
+      case REJECTED         -> "rejected";
+      default               -> "received";
+    });
+    payload.put("recipient", saved.getPatientEmail());
+    payload.put("subject", switch (saved.getStatus()) {
+      case PROCESSING       -> "Your prescription is being prepared";
+      case READY_FOR_PICKUP -> "Your prescription is ready for pickup";
+      case REJECTED         -> "Your prescription could not be filled";
+      default               -> "Prescription update";
+    });
+    payload.put("body", switch (saved.getStatus()) {
+      case PROCESSING -> String.format(
+          "Hi %s, your prescription for %s is now being prepared at Central Pharmacy.",
+          saved.getPatientName(), saved.getMedicationName());
+      case READY_FOR_PICKUP -> String.format(
+          "Hi %s, your prescription for %s is ready for pickup at Central Pharmacy.",
+          saved.getPatientName(), saved.getMedicationName());
+      case REJECTED -> String.format(
+          "Hi %s, your prescription for %s could not be filled. Reason: %s",
+          saved.getPatientName(), saved.getMedicationName(), saved.getRejectionReason());
+      default -> String.format(
+          "Hi %s, your prescription status has been updated.",
+          saved.getPatientName());
+    });
+    pgmqService.sendMessage("notifications", payload);
     return saved;
   }
   public Map<String,Long> stats(){
