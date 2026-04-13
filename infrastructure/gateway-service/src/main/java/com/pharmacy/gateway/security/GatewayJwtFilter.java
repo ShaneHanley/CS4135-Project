@@ -10,13 +10,19 @@ import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -34,6 +40,9 @@ public class GatewayJwtFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
+        if (HttpMethod.OPTIONS.matches(request.getMethod())) {
+            return true;
+        }
         if (PUBLIC_PATHS.contains(path)) {
             return true;
         }
@@ -62,8 +71,18 @@ public class GatewayJwtFilter extends OncePerRequestFilter {
             Map<String, String> extraHeaders = new HashMap<>();
             extraHeaders.put("X-User-Id", userId);
             extraHeaders.put("X-User-Role", role);
+
+            List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+            var authentication = new UsernamePasswordAuthenticationToken(userId, null, authorities);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
             var wrapped = new HeaderMapRequestWrapper(request, extraHeaders);
-            filterChain.doFilter(wrapped, response);
+            try {
+                filterChain.doFilter(wrapped, response);
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
         } catch (Exception ex) {
             writeUnauthorized(response, "Invalid token");
         }
