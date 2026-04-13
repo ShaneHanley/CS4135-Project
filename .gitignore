@@ -2,3 +2,7 @@ web-frontend/node_modules/
 
 # Maven/Java build artifacts
 **/target/
+
+# Environment files
+.env
+**/.env
