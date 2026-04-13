@@ -4,7 +4,7 @@ import { fetchPharmacyPrescriptions, updatePharmacyPrescriptionStatus } from '..
 import ErrorBanner from '../components/ErrorBanner';
 import LoadingSpinner from '../components/LoadingSpinner';
 
-const statuses = ['PROCESSING', 'READY_FOR_PICKUP', 'REJECTED'];
+const statuses = ['PROCESSING', 'READY_FOR_PICKUP', 'DISPENSED', 'REJECTED'];
 
 export default function PharmacyPage() {
   const dispatch = useDispatch();
