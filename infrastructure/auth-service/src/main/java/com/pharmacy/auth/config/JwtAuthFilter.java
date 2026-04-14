@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pharmacy.auth.common.ErrorResponse;
 import com.pharmacy.auth.service.JwtService;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -70,13 +69,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     role == null ? List.of() : List.of(new SimpleGrantedAuthority("ROLE_" + role));
             var authentication = new UsernamePasswordAuthenticationToken(email, null, authorities);
             SecurityContextHolder.getContext().setAuthentication(authentication);
-        } catch (ExpiredJwtException e) {
-            SecurityContextHolder.clearContext();
-            writeJsonError(response, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED", "Token has expired");
-            return;
         } catch (JwtException e) {
             SecurityContextHolder.clearContext();
-            writeJsonError(response, HttpServletResponse.SC_UNAUTHORIZED, "INVALID_TOKEN", "Invalid token");
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("expired")) {
+                writeJsonError(response, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED", "Token has expired");
+            } else {
+                writeJsonError(response, HttpServletResponse.SC_UNAUTHORIZED, "INVALID_TOKEN", "Invalid token");
+            }
             return;
         }
 
