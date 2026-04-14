@@ -1,18 +1,19 @@
 package com.pharmacy.prescription.controller;
 import com.pharmacy.prescription.common.ApiResponse;
 import com.pharmacy.prescription.dto.PrescriptionDtos;
+import com.pharmacy.prescription.service.PharmacyService;
 import com.pharmacy.prescription.service.PrescriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import java.util.Map;
 @RestController
 @RequestMapping("/api/doctor")
 public class PrescriptionController {
   private final PrescriptionService service;
-  public PrescriptionController(PrescriptionService service){ this.service = service; }
+  private final PharmacyService pharmacyService;
+  public PrescriptionController(PrescriptionService service, PharmacyService pharmacyService){ this.service = service; this.pharmacyService = pharmacyService; }
   @GetMapping("/prescriptions") @Operation(summary="Get doctor prescriptions") @PreAuthorize("hasRole('DOCTOR')")
   public ApiResponse<List<PrescriptionDtos.PrescriptionView>> list(@RequestHeader("X-User-Id") String doctorId){ return ApiResponse.ok(service.byDoctor(doctorId), "Fetched"); }
   @PostMapping("/prescriptions") @Operation(summary="Create prescription") @PreAuthorize("hasRole('DOCTOR')")
@@ -20,5 +21,5 @@ public class PrescriptionController {
   @GetMapping("/prescriptions/{id}/status") @Operation(summary="Get status") @PreAuthorize("hasRole('DOCTOR')")
   public ApiResponse<String> status(@RequestHeader("X-User-Id") String doctorId, @PathVariable String id){ return ApiResponse.ok(service.status(doctorId, id), "Status"); }
   @GetMapping("/pharmacies") @Operation(summary="Get pharmacies") @PreAuthorize("hasRole('DOCTOR')")
-  public ApiResponse<?> pharmacies(){ return ApiResponse.ok(List.of(Map.of("id","default-pharmacy","name","Central Pharmacy")), "Fetched"); }
+  public ApiResponse<List<PrescriptionDtos.PharmacyView>> pharmacies(){ return ApiResponse.ok(pharmacyService.listActive(), "Fetched"); }
 }
