@@ -3,12 +3,12 @@ package com.pharmacy.gateway.security;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
-import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Date;
-import javax.crypto.SecretKey;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockFilterChain;
@@ -19,14 +19,19 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 class GatewayJwtFilterTest {
 
-    private static final String SECRET = "test-secret-must-be-at-least-32-bytes-long-for-hs256";
+    private java.security.PrivateKey privateKey;
 
     private GatewayJwtFilter filter;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         filter = new GatewayJwtFilter();
-        ReflectionTestUtils.setField(filter, "jwtSecret", SECRET);
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");
+        keyPairGenerator.initialize(256);
+        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        privateKey = keyPair.getPrivate();
+        String publicKeyB64 = Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
+        ReflectionTestUtils.setField(filter, "publicKeyB64", publicKeyB64);
         SecurityContextHolder.clearContext();
     }
 
@@ -105,11 +110,7 @@ class GatewayJwtFilterTest {
                 .claim("role", role)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(60)))
-                .signWith(key())
+                .signWith(privateKey, Jwts.SIG.ES256)
                 .compact();
-    }
-
-    private SecretKey key() {
-        return Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
     }
 }

@@ -4,14 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.sun.net.httpserver.HttpServer;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.crypto.SecretKey;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +32,8 @@ import org.springframework.test.context.DynamicPropertySource;
 @ActiveProfiles("test")
 class GatewayRoutingIntegrationTest {
 
-    private static final String SECRET = "test-secret-must-be-at-least-32-bytes-long-for-hs256";
+    private static final KeyPair KEY_PAIR = generateKeyPair();
+    private static final String PUBLIC_KEY_B64 = Base64.getEncoder().encodeToString(KEY_PAIR.getPublic().getEncoded());
 
     private static final HttpServer authBackend = startAuthBackend();
     private static final HttpServer prescriptionBackend = startPrescriptionBackend();
@@ -49,7 +52,7 @@ class GatewayRoutingIntegrationTest {
         registry.add("PRESCRIPTION_SERVICE_URL", () -> "http://localhost:" + prescriptionBackend.getAddress().getPort());
         registry.add("PATIENT_SERVICE_URL", () -> "http://localhost:" + patientBackend.getAddress().getPort());
         registry.add("PHARMACY_SERVICE_URL", () -> "http://localhost:" + pharmacyBackend.getAddress().getPort());
-        registry.add("JWT_SECRET", () -> SECRET);
+        registry.add("JWT_EC_PUBLIC_KEY_B64", () -> PUBLIC_KEY_B64);
     }
 
     @AfterAll
@@ -219,11 +222,21 @@ class GatewayRoutingIntegrationTest {
                 .claim("role", role)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(120)))
-                .signWith(key())
+                .signWith(privateKey(), Jwts.SIG.ES256)
                 .compact();
     }
 
-    private SecretKey key() {
-        return Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+    private static PrivateKey privateKey() {
+        return KEY_PAIR.getPrivate();
+    }
+
+    private static KeyPair generateKeyPair() {
+        try {
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");
+            keyPairGenerator.initialize(256);
+            return keyPairGenerator.generateKeyPair();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to generate test EC key pair", e);
+        }
     }
 }
