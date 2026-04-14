@@ -2,22 +2,24 @@ package com.pharmacy.gateway.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,8 +36,8 @@ public class GatewayJwtFilter extends OncePerRequestFilter {
             "/api/auth/refresh"
     );
 
-    @Value("${JWT_SECRET:change-me-change-me-change-me-change-me}")
-    private String jwtSecret;
+    @Value("${JWT_EC_PUBLIC_KEY_B64:}")
+    private String publicKeyB64;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -60,7 +62,7 @@ public class GatewayJwtFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
         try {
-            Claims claims = Jwts.parser().verifyWith(key()).build().parseSignedClaims(token).getPayload();
+            Claims claims = Jwts.parser().verifyWith(publicKey()).build().parseSignedClaims(token).getPayload();
             String userId = claims.get("userId", String.class);
             String role = claims.get("role", String.class);
             if (userId == null || role == null) {
@@ -83,19 +85,32 @@ public class GatewayJwtFilter extends OncePerRequestFilter {
             } finally {
                 SecurityContextHolder.clearContext();
             }
-        } catch (Exception ex) {
-            writeUnauthorized(response, "Invalid token");
+        } catch (JwtException ex) {
+            if (ex.getMessage() != null && ex.getMessage().toLowerCase().contains("expired")) {
+                writeUnauthorized(response, "Token has expired");
+            } else {
+                writeUnauthorized(response, "Invalid token");
+            }
         }
-    }
-
-    private SecretKey key() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     private void writeUnauthorized(HttpServletResponse response, String message) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
         response.getWriter().write("{\"success\":false,\"error\":{\"code\":\"UNAUTHORIZED\",\"message\":\"" + message + "\",\"details\":null},\"timestamp\":\"" + java.time.Instant.now() + "\"}");
+    }
+
+    private PublicKey publicKey() {
+        if (publicKeyB64 == null || publicKeyB64.isBlank()) {
+            throw new JwtException("JWT_EC_PUBLIC_KEY_B64 is not configured");
+        }
+        try {
+            byte[] bytes = Base64.getDecoder().decode(publicKeyB64);
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(bytes);
+            return KeyFactory.getInstance("EC").generatePublic(spec);
+        } catch (Exception e) {
+            throw new JwtException("Invalid EC public key", e);
+        }
     }
 
     private static class HeaderMapRequestWrapper extends HttpServletRequestWrapper {

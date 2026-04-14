@@ -8,7 +8,6 @@ import com.pharmacy.auth.exception.InvalidRefreshTokenException;
 import com.pharmacy.auth.exception.UserNotFoundException;
 import com.pharmacy.auth.repository.UserRepository;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import java.util.Locale;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -57,7 +56,7 @@ public class AuthService {
         Claims claims;
         try {
             claims = jwtService.parse(request.refreshToken());
-        } catch (JwtException e) {
+        } catch (Exception e) {
             throw new InvalidRefreshTokenException("Invalid or expired refresh token");
         }
         String email = claims.getSubject();
