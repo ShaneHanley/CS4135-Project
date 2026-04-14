@@ -180,7 +180,11 @@ class PharmacyServiceTest {
         msg.put("dosage", "100mg");
         msg.put("quantity", "30");
         Map<String, Object> row = new HashMap<>();
-        row.put("message", msg);
+        try {
+            row.put("message", new ObjectMapper().writeValueAsString(msg));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         row.put("msg_id", msgId);
         return row;
     }

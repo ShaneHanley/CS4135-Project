@@ -10,7 +10,8 @@ public class GlobalExceptionHandler {
     return ResponseEntity.badRequest().body(ErrorResponse.of("BAD_REQUEST", ex.getMessage(), null));
   }
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<ErrorResponse> handleAny(Exception ex) {
+  public ResponseEntity<ErrorResponse> handleAny(Exception ex) throws Exception {
+    if (ex instanceof org.springframework.security.access.AccessDeniedException) throw ex;
     return ResponseEntity.internalServerError().body(ErrorResponse.of("INTERNAL_ERROR", ex.getMessage(), null));
   }
 }
