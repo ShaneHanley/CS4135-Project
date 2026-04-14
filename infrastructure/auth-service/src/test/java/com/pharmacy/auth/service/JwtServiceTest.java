@@ -7,6 +7,9 @@ import com.pharmacy.auth.entity.User;
 import com.pharmacy.auth.entity.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.util.Base64;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,9 +20,15 @@ class JwtServiceTest {
     private JwtService jwtService;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         jwtService = new JwtService();
-        ReflectionTestUtils.setField(jwtService, "jwtSecret", "test-secret-must-be-at-least-32-bytes-long-for-hs256");
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");
+        keyPairGenerator.initialize(256);
+        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        ReflectionTestUtils.setField(jwtService, "privateKeyB64",
+                Base64.getEncoder().encodeToString(keyPair.getPrivate().getEncoded()));
+        ReflectionTestUtils.setField(jwtService, "publicKeyB64",
+                Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded()));
         ReflectionTestUtils.setField(jwtService, "accessTokenTtlSeconds", 60L);
         ReflectionTestUtils.setField(jwtService, "refreshTokenTtlSeconds", 120L);
     }
