@@ -21,7 +21,16 @@ const initial = {
 };
 const slice = createSlice({
   name: 'auth', initialState: initial,
-  reducers: { logout(state){ Object.assign(state, initial); localStorage.removeItem('auth'); } },
+  reducers: {
+    logout(state) {
+      state.accessToken = null;
+      state.refreshToken = null;
+      state.user = null;
+      state.loading = false;
+      state.error = null;
+      localStorage.removeItem('auth');
+    }
+  },
   extraReducers: (b) => {
     b.addCase(login.pending, (s) => { s.loading = true; s.error = null; })
      .addCase(login.fulfilled, (s, a) => { s.loading = false; Object.assign(s, a.payload); localStorage.setItem('auth', JSON.stringify(a.payload)); })
