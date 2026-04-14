@@ -27,9 +27,8 @@ public class PharmacyService {
     for (Map<String,Object> row : rows) {
       try {
         Object msgObj = row.get("message");
-        Map<String,Object> m = (msgObj instanceof String s)
-          ? objectMapper.readValue(s, new TypeReference<Map<String,Object>>() {})
-          : objectMapper.convertValue(msgObj, new TypeReference<Map<String,Object>>() {});
+        String json = (msgObj instanceof String s) ? s : msgObj.toString();
+        Map<String,Object> m = objectMapper.readValue(json, new TypeReference<Map<String,Object>>() {});
         UUID prescriptionId = UUID.fromString(String.valueOf(m.get("prescriptionId")));
         if (repository.findByPrescriptionId(prescriptionId).isEmpty()) {
           PharmacyPrescription p = new PharmacyPrescription();
@@ -45,11 +44,11 @@ public class PharmacyService {
           p.setStatus(PharmacyPrescriptionStatus.NEW);
           repository.save(p);
         }
+        Object idObj = row.get("msg_id");
+        if (idObj != null) pgmqService.deleteMessage("prescription_created", Long.parseLong(String.valueOf(idObj)));
       } catch (Exception e) {
         log.warn("Failed to process message from prescription_created queue: {}", e.getMessage());
       }
-      Object idObj = row.get("msg_id");
-      if (idObj != null) pgmqService.deleteMessage("prescription_created", Long.parseLong(String.valueOf(idObj)));
     }
   }
   public List<PharmacyPrescription> list(){ return repository.findAll(); }
