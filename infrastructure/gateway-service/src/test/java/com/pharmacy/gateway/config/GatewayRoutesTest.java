@@ -3,26 +3,23 @@ package com.pharmacy.gateway.config;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 class GatewayRoutesTest {
 
     @Test
-    void corsFilter_allowsConfiguredOrigin() throws Exception {
+    void corsConfigurationSource_allowsConfiguredOrigin() {
         String origin = "http://localhost:3000";
-        GatewayRoutes routes = new GatewayRoutes();
-        CorsFilter filter = routes.corsFilter(origin);
+        SecurityConfig config = new SecurityConfig();
+        CorsConfigurationSource source = config.corsConfigurationSource(origin);
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/patients/me");
-        request.addHeader("Origin", origin);
-        MockHttpServletResponse response = new MockHttpServletResponse();
+        CorsConfiguration corsConfig = source.getCorsConfiguration(request);
 
-        filter.doFilter(request, response, new MockFilterChain());
-
-        assertThat(response.getHeader("Access-Control-Allow-Origin")).isEqualTo(origin);
-        assertThat(response.getHeader("Access-Control-Allow-Credentials")).isEqualTo("true");
+        assertThat(corsConfig).isNotNull();
+        assertThat(corsConfig.getAllowedOrigins()).contains(origin);
+        assertThat(corsConfig.getAllowCredentials()).isTrue();
     }
 }
