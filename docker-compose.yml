@@ -1,7 +1,8 @@
 services:
   gateway-service:
-    build: ./gateway-service
-    ports: ["8080:8080"]
+    build: ./infrastructure/gateway-service
+    ports:
+      - "8080:8080"
     env_file: .env
     environment:
       AUTH_SERVICE_URL: http://auth-service:8081
@@ -15,12 +16,57 @@ services:
       - auth-service
       - prescription-service
       - pharmacy-service
-  auth-service: { build: ./auth-service, ports: ["8081:8081"], env_file: .env }
-  prescription-service: { build: ./prescription-service, ports: ["8082:8082"], env_file: .env }
-  pharmacy-service: { build: ./pharmacy-service, ports: ["8083:8083"], env_file: .env }
+      - patient-service
+      - inventory-service
+      - billing-service
+      - analytics-service
+
+  auth-service:
+    build: ./infrastructure/auth-service
+    ports:
+      - "8081:8081"
+    env_file: .env
+
+  prescription-service:
+    build: ./services/prescription-service
+    ports:
+      - "8082:8082"
+    env_file: .env
+
+  pharmacy-service:
+    build: ./services/pharmacy-service
+    ports:
+      - "8083:8083"
+    env_file: .env
+
+  patient-service:
+    build: ./services/patient-service
+    ports:
+      - "8084:8084"
+    env_file: .env
+
+  inventory-service:
+    build: ./services/inventory-service
+    ports:
+      - "8085:8085"
+    env_file: .env
+
+  billing-service:
+    build: ./services/billing-service
+    ports:
+      - "8086:8086"
+    env_file: .env
+
+  analytics-service:
+    build: ./services/analytics-service
+    ports:
+      - "8087:8087"
+    env_file: .env
+
   notification-service:
-    build: ./notification-service
-    ports: ["8088:8080"]
+    build: ./services/notification-service
+    ports:
+      - "8088:8080"
     env_file: .env
     environment:
       SPRING_DATASOURCE_URL: ${SUPABASE_DB_URL}
@@ -31,9 +77,11 @@ services:
       TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
       SENDGRID_API_KEY: ${SENDGRID_API_KEY}
       SENDGRID_FROM_EMAIL: ${SENDGRID_FROM_EMAIL}
+
   web-frontend:
     build: ./web-frontend
-    ports: ["3000:3000"]
+    ports:
+      - "3000:80"
     env_file: .env
     depends_on:
       - gateway-service
