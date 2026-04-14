@@ -28,43 +28,57 @@ services:
     env_file: .env
 
   prescription-service:
-    build: ./services/prescription-service
+    build:
+      context: .
+      dockerfile: services/prescription-service/Dockerfile
     ports:
       - "8082:8082"
     env_file: .env
 
   pharmacy-service:
-    build: ./services/pharmacy-service
+    build:
+      context: .
+      dockerfile: services/pharmacy-service/Dockerfile
     ports:
       - "8083:8083"
     env_file: .env
 
   patient-service:
-    build: ./services/patient-service
+    build:
+      context: .
+      dockerfile: services/patient-service/Dockerfile
     ports:
       - "8084:8084"
     env_file: .env
 
   inventory-service:
-    build: ./services/inventory-service
+    build:
+      context: .
+      dockerfile: services/inventory-service/Dockerfile
     ports:
       - "8085:8085"
     env_file: .env
 
   billing-service:
-    build: ./services/billing-service
+    build:
+      context: .
+      dockerfile: services/billing-service/Dockerfile
     ports:
       - "8086:8086"
     env_file: .env
 
   analytics-service:
-    build: ./services/analytics-service
+    build:
+      context: .
+      dockerfile: services/analytics-service/Dockerfile
     ports:
       - "8087:8087"
     env_file: .env
 
   notification-service:
-    build: ./services/notification-service
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
     ports:
       - "8088:8080"
     env_file: .env
