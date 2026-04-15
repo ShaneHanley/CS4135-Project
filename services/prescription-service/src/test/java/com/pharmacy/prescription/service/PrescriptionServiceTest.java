@@ -53,7 +53,17 @@ class PrescriptionServiceTest {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, Object>> payloadCaptor = ArgumentCaptor.forClass(Map.class);
         verify(pgmqService).sendMessage(eq("prescription_created"), payloadCaptor.capture());
-        assertThat(payloadCaptor.getValue()).containsKey("prescriptionId");
+        assertThat(payloadCaptor.getValue()).containsKeys(
+                "prescriptionId",
+                "doctorId",
+                "patientId",
+                "patientEmail",
+                "patientName",
+                "pharmacyId",
+                "medicationName",
+                "dosage",
+                "quantity",
+                "createdAt");
     }
 
     @Test
