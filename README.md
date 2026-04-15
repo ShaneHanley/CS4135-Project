@@ -37,7 +37,7 @@ gateway-service :8080       ← JWT validation, header injection, routing
 | Layer | Technology |
 |---|---|
 | Frontend | React 18, Vite, Redux Toolkit, React Router, Recharts |
-| Backend | Spring Boot 3.3 (Java 17), Spring Cloud 2023 |
+| Backend | Spring Boot 3.3 (Java 21), Spring Cloud 2023 |
 | Database | Supabase PostgreSQL (Flyway migrations) |
 | Messaging | PGMQ (Postgres-based message queue) |
 | Auth | JWT (EC key pair), BCrypt |
