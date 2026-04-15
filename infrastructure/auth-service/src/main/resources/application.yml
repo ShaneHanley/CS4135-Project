@@ -10,6 +10,8 @@ app:
     allowed-origins: ${APP_CORS_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
 
 spring:
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://config-server:8888}
   application:
     name: auth-service
   datasource:
@@ -31,3 +33,7 @@ spring:
     schemas: auth_svc
     default-schema: auth_svc
     locations: classpath:db/migration
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://discovery-service:8761/eureka}
