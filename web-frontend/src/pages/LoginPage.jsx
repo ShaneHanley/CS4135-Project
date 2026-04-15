@@ -16,7 +16,16 @@ const loginSchema = yup.object({
 const registerSchema = yup.object({
   firstName: yup.string().required(),
   lastName: yup.string().required(),
-  email: yup.string().email().required(),
+  email: yup.string().email().required().test(
+    'role-domain',
+    function (value) {
+      const { role } = this.parent;
+      if (!role || role === 'PATIENT') return true;
+      const expected = `@${role.toLowerCase()}.com`;
+      if (value && value.endsWith(expected)) return true;
+      return this.createError({ message: `Email must end with ${expected} for the ${role} role` });
+    }
+  ),
   password: yup.string().min(8).required(),
   confirmPassword: yup.string().oneOf([yup.ref('password')], 'Passwords must match').required(),
   role: yup.string().oneOf(['PATIENT', 'DOCTOR', 'PHARMACIST', 'TECHNICIAN', 'MANAGER', 'ADMIN']).required()
