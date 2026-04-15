@@ -1,6 +1,8 @@
 server:
   port: 8082
 spring:
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://config-server:8888}
   application:
     name: prescription-service
   datasource:
@@ -23,6 +25,10 @@ spring:
     schemas: prescription_svc
     default-schema: prescription_svc
     locations: classpath:db/migration
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://discovery-service:8761/eureka}
 
 app:
   messaging:

@@ -1,6 +1,8 @@
 server:
   port: 8083
 spring:
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://config-server:8888}
   application:
     name: pharmacy-service
   datasource:
@@ -22,3 +24,7 @@ spring:
     schemas: pharmacy_svc
     default-schema: pharmacy_svc
     locations: classpath:db/migration
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://discovery-service:8761/eureka}
