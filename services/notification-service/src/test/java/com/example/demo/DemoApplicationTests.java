@@ -4,6 +4,7 @@ import com.example.demo.model.NotificationMessage;
 import com.example.demo.service.NotificationProcessor;
 import com.example.demo.service.TwilioEmailService;
 import com.example.demo.service.TwilioSmsService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -23,6 +24,8 @@ import static org.mockito.Mockito.verify;
 class DemoApplicationTests {
 	@Autowired
 	private NotificationProcessor notificationProcessor;
+	@Autowired
+	private ObjectMapper objectMapper;
 
 	@MockBean
 	private TwilioSmsService smsService;
@@ -90,6 +93,27 @@ class DemoApplicationTests {
 
 		verify(smsService, never()).sendSms(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
 		verify(emailService, never()).sendEmail(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
+	}
+
+	@Test
+	void notificationMessageContract_mapsMsgIdAndIgnoresUnknownFields() throws Exception {
+		String json = """
+				{
+				  "channel":"email",
+				  "type":"collect",
+				  "recipient":"patient@example.com",
+				  "subject":"Ready",
+				  "body":"Pickup now",
+				  "msg_id": 77,
+				  "unexpected":"ignored"
+				}
+				""";
+
+		NotificationMessage message = objectMapper.readValue(json, NotificationMessage.class);
+
+		org.assertj.core.api.Assertions.assertThat(message.getChannel()).isEqualTo("email");
+		org.assertj.core.api.Assertions.assertThat(message.getType()).isEqualTo("collect");
+		org.assertj.core.api.Assertions.assertThat(message.getMsgId()).isEqualTo(77L);
 	}
 
 }

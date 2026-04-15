@@ -89,6 +89,11 @@ class PharmacyServiceTest {
         ArgumentCaptor<Map> captor = ArgumentCaptor.forClass(Map.class);
         verify(pgmqService).sendMessage(eq("notifications"), captor.capture());
         Map<?, ?> payload = captor.getValue();
+        assertThat(payload.get("channel")).isNotNull();
+        assertThat(payload.get("type")).isNotNull();
+        assertThat(payload.get("recipient")).isNotNull();
+        assertThat(payload.get("subject")).isNotNull();
+        assertThat(payload.get("body")).isNotNull();
         assertThat(payload.get("channel")).isEqualTo("email");
         assertThat(payload.get("type")).isEqualTo("processing");
         assertThat(payload.get("recipient")).isEqualTo("patient@test.com");

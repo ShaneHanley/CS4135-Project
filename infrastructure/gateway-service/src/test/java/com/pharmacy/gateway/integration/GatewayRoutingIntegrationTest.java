@@ -140,6 +140,32 @@ class GatewayRoutingIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
+    @Test
+    void endToEnd_gatewayFlow_loginThenDoctorThenPharmacyRoute() {
+        ResponseEntity<String> login = restTemplate.postForEntity("/api/auth/login", "{}", String.class);
+        assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        HttpHeaders doctorHeaders = new HttpHeaders();
+        doctorHeaders.set("Authorization", "Bearer " + buildToken("doctor-flow-1", "DOCTOR"));
+        ResponseEntity<String> doctorResponse = restTemplate.exchange(
+                "/api/doctor/prescriptions",
+                HttpMethod.GET,
+                new HttpEntity<>(doctorHeaders),
+                String.class);
+        assertThat(doctorResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(lastUserId.get()).isEqualTo("doctor-flow-1");
+        assertThat(lastUserRole.get()).isEqualTo("DOCTOR");
+
+        HttpHeaders pharmacyHeaders = new HttpHeaders();
+        pharmacyHeaders.set("Authorization", "Bearer " + buildToken("pharmacy-flow-1", "PHARMACY"));
+        ResponseEntity<String> pharmacyResponse = restTemplate.exchange(
+                "/api/pharmacy/prescriptions",
+                HttpMethod.GET,
+                new HttpEntity<>(pharmacyHeaders),
+                String.class);
+        assertThat(pharmacyResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
     private static HttpServer startAuthBackend() {
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
