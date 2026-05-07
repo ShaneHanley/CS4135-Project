@@ -45,6 +45,9 @@ class DemoApplicationTests {
 				"+15551234567",
 				null,
 				"Your prescription has been logged.",
+				null,
+				0,
+				null,
 				1L
 		);
 
@@ -65,6 +68,9 @@ class DemoApplicationTests {
 				"patient@example.com",
 				"  ",
 				"Please collect from the pharmacy desk.",
+				null,
+				0,
+				null,
 				2L
 		);
 
@@ -86,6 +92,9 @@ class DemoApplicationTests {
 				"patient@example.com",
 				"Subject",
 				"Body",
+				null,
+				0,
+				null,
 				3L
 		);
 

@@ -32,6 +32,12 @@ public class NotificationScheduler {
     @Value("${notifications.visibility-timeout:30}")
     private int visibilityTimeout;
 
+    @Value("${notifications.max-retries:5}")
+    private int maxRetries;
+
+    @Value("${notifications.dead-letter-queue:dead_letter_notifications}")
+    private String deadLetterQueue;
+
     /**
      * Runs every 15 seconds by default. Reads messages from the pgmq queue,
      * processes each one, and archives successfully handled messages.
@@ -64,15 +70,38 @@ public class NotificationScheduler {
         log.info("Read {} message(s) from 'notifications' queue", messages.size());
 
         for (NotificationMessage message : messages) {
+            Long msgId = message.getMsgId();
             try {
+                if (message.getRetryCount() > maxRetries) {
+                    pgmqService.sendMessage(deadLetterQueue, message);
+                    pgmqService.archiveMessage("notifications", msgId);
+                    log.warn("Moved message {} to dead-letter queue '{}' due to retryCount={}",
+                        msgId, deadLetterQueue, message.getRetryCount());
+                    continue;
+                }
+                if (notificationProcessor.isStale(message)) {
+                    pgmqService.archiveMessage("notifications", msgId);
+                    log.warn("Discarded stale notification message {} for prescription {}",
+                        msgId, message.getPrescriptionId());
+                    continue;
+                }
                 notificationProcessor.process(message);
-                pgmqService.archiveMessage("notifications", message.getMsgId());
-                log.info("Successfully processed and archived message {}", message.getMsgId());
+                pgmqService.archiveMessage("notifications", msgId);
+                log.info("Successfully processed and archived message {}", msgId);
             } catch (Exception e) {
-                log.error("Failed to process message {} — it will become visible again after timeout",
-                        message.getMsgId(), e);
-                // Message remains in queue; pgmq visibility timeout will make it
-                // available for retry after the configured timeout period.
+                int retryCount = notificationProcessor.incrementRetryCount(message);
+                String targetQueue = retryCount > maxRetries ? deadLetterQueue : "notifications";
+                String actionPastTense = retryCount > maxRetries ? "dead-lettered" : "re-queued";
+                String actionVerb = retryCount > maxRetries ? "dead-letter" : "re-queue";
+
+                try {
+                    pgmqService.sendMessage(targetQueue, message);
+                    pgmqService.archiveMessage("notifications", msgId);
+                    log.warn("{} message {} with retryCount={} to queue '{}'",
+                        actionPastTense, msgId, retryCount, targetQueue);
+                } catch (Exception sendError) {
+                    log.error("Failed to {} message {}", actionVerb, msgId, sendError);
+                }
             }
         }
     }

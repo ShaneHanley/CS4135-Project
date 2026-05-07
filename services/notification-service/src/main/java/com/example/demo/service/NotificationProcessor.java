@@ -16,6 +16,7 @@ public class NotificationProcessor {
 
     private final TwilioSmsService smsService;
     private final TwilioEmailService emailService;
+    private final PrescriptionStatusService prescriptionStatusService;
 
     /**
      * Processes a single notification message.
@@ -45,6 +46,32 @@ public class NotificationProcessor {
 
     private void sendEmail(String to, String subject, String body) {
         emailService.sendEmail(to, subject, body);
+    }
+
+    /**
+     * Returns true when the message is older than the latest prescription update.
+     */
+    public boolean isStale(NotificationMessage message) {
+        if (message.getCreatedAt() == null) {
+            return false;
+        }
+        String prescriptionId = message.getPrescriptionId();
+        if (prescriptionId == null || prescriptionId.isBlank()) {
+            return false;
+        }
+
+        return prescriptionStatusService.findPrescriptionUpdatedAt(prescriptionId)
+            .map(updatedAt -> message.getCreatedAt().isBefore(updatedAt))
+            .orElse(false);
+    }
+
+    /**
+     * Increments retry count on failure and returns the new count.
+     */
+    public int incrementRetryCount(NotificationMessage message) {
+        int next = message.getRetryCount() + 1;
+        message.setRetryCount(next);
+        return next;
     }
 
     /**

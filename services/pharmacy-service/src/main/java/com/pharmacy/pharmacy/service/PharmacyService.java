@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import java.time.Instant;
 import java.util.*;
 @Service
 public class PharmacyService {
@@ -68,6 +69,7 @@ public class PharmacyService {
     String actor = (auth != null) ? String.valueOf(auth.getPrincipal()) : "unknown";
     log.info("AUDIT | actor={} prescription={} {} -> {}", actor, saved.getPrescriptionId(), previous, saved.getStatus());
     Map<String,Object> payload = new LinkedHashMap<>();
+    payload.put("prescriptionId", saved.getPrescriptionId().toString());
     payload.put("channel", "email");
     payload.put("type", switch (saved.getStatus()) {
       case PROCESSING       -> "processing";
@@ -77,6 +79,9 @@ public class PharmacyService {
       default               -> "received";
     });
     payload.put("recipient", saved.getPatientEmail());
+    payload.put("retryCount", 0);
+    Instant createdAt = saved.getUpdatedAt() != null ? saved.getUpdatedAt() : Instant.now();
+    payload.put("createdAt", createdAt);
     payload.put("subject", switch (saved.getStatus()) {
       case PROCESSING       -> "Your prescription is being prepared";
       case READY_FOR_PICKUP -> "Your prescription is ready for pickup";

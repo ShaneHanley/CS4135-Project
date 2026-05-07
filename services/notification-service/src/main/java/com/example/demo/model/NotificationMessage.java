@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.time.Instant;
+
 /**
  * Represents a notification message pulled from the pgmq 'notifications' queue.
  *
@@ -15,7 +17,10 @@ import lombok.AllArgsConstructor;
  *   "type": "received" | "processing" | "collect",
  *   "recipient": "+15551234567" (for SMS) or "user@example.com" (for email),
  *   "subject": "optional email subject",
- *   "body": "The message content"
+ *   "body": "The message content",
+ *   "prescriptionId": "uuid",
+ *   "retryCount": 0,
+ *   "createdAt": "2024-01-01T00:00:00Z"
  * }
  */
 @Data
@@ -39,7 +44,16 @@ public class NotificationMessage {
     /** The message body content */
     private String body;
 
+    /** The prescription id associated with this notification (if applicable) */
+    private String prescriptionId;
+
+    /** Number of delivery attempts so far */
+    private int retryCount;
+
+    /** Timestamp for when the notification was created */
+    private Instant createdAt;
+
     /** pgmq message id — populated after reading from the queue */
-    @JsonProperty("msg_id")
+    @JsonProperty(value = "msg_id", access = JsonProperty.Access.WRITE_ONLY)
     private Long msgId;
 }

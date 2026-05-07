@@ -26,3 +26,7 @@ notifications.cron=*/15 * * * * *
 notifications.batch-size=10
 # Seconds a message stays invisible after being read (retry window)
 notifications.visibility-timeout=30
+# Max failed delivery attempts before dead-lettering
+notifications.max-retries=5
+# Dead-letter queue name for exhausted notifications
+notifications.dead-letter-queue=dead_letter_notifications
