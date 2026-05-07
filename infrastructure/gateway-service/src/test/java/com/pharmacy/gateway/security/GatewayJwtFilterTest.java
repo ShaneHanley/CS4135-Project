@@ -14,24 +14,26 @@ import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.util.ReflectionTestUtils;
 
 class GatewayJwtFilterTest {
 
     private java.security.PrivateKey privateKey;
+    private MockEnvironment environment;
 
     private GatewayJwtFilter filter;
 
     @BeforeEach
     void setUp() throws Exception {
-        filter = new GatewayJwtFilter();
+        environment = new MockEnvironment();
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");
         keyPairGenerator.initialize(256);
         KeyPair keyPair = keyPairGenerator.generateKeyPair();
         privateKey = keyPair.getPrivate();
         String publicKeyB64 = Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
-        ReflectionTestUtils.setField(filter, "publicKeyB64", publicKeyB64);
+        environment.setProperty("JWT_EC_PUBLIC_KEY_B64", publicKeyB64);
+        filter = new GatewayJwtFilter(environment);
         SecurityContextHolder.clearContext();
     }
 
@@ -76,7 +78,7 @@ class GatewayJwtFilterTest {
 
     @Test
     void protectedRoute_withValidToken_forwardsUserHeaders() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/pharmacy/prescriptions");
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/doctor/prescriptions");
         request.addHeader("Authorization", "Bearer " + buildToken("user-123", "DOCTOR"));
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
@@ -88,6 +90,20 @@ class GatewayJwtFilterTest {
         assertThat(forwarded.getHeader("X-User-Id")).isEqualTo("user-123");
         assertThat(forwarded.getHeader("X-User-Role")).isEqualTo("DOCTOR");
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test
+    void protectedRoute_withInsufficientRole_returns403() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/doctor/prescriptions");
+        request.addHeader("Authorization", "Bearer " + buildToken("user-456", "PHARMACIST"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertThat(chain.getRequest()).isNull();
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThat(response.getContentAsString()).contains("Insufficient role permissions");
     }
 
     @Test

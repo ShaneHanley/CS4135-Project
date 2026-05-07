@@ -97,6 +97,21 @@ class GatewayRoutingIntegrationTest {
     }
 
     @Test
+    void protectedDoctorRoute_withPharmacistToken_returns403() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + buildToken("pharmacist-user-1", "PHARMACIST"));
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/doctor/prescriptions",
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody()).contains("Insufficient role permissions");
+    }
+
+    @Test
     void protectedPatientRoute_withValidToken_isForwarded() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + buildToken("patient-user-1", "PATIENT"));
@@ -114,7 +129,7 @@ class GatewayRoutingIntegrationTest {
     @Test
     void protectedPharmacyRoute_withValidToken_isForwarded() {
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + buildToken("pharmacy-user-1", "PHARMACY"));
+        headers.set("Authorization", "Bearer " + buildToken("pharmacy-user-1", "PHARMACIST"));
 
         ResponseEntity<String> response = restTemplate.exchange(
                 "/api/pharmacy/prescriptions",
@@ -157,7 +172,7 @@ class GatewayRoutingIntegrationTest {
         assertThat(lastUserRole.get()).isEqualTo("DOCTOR");
 
         HttpHeaders pharmacyHeaders = new HttpHeaders();
-        pharmacyHeaders.set("Authorization", "Bearer " + buildToken("pharmacy-flow-1", "PHARMACY"));
+        pharmacyHeaders.set("Authorization", "Bearer " + buildToken("pharmacy-flow-1", "PHARMACIST"));
         ResponseEntity<String> pharmacyResponse = restTemplate.exchange(
                 "/api/pharmacy/prescriptions",
                 HttpMethod.GET,

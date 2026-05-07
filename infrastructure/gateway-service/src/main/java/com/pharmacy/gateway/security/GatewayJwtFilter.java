@@ -20,12 +20,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.core.env.Environment;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
@@ -36,8 +36,24 @@ public class GatewayJwtFilter extends OncePerRequestFilter {
             "/api/auth/refresh"
     );
 
-    @Value("${JWT_EC_PUBLIC_KEY_B64:}")
-    private String publicKeyB64;
+    private static final Map<String, List<String>> ROLE_PREFIX_PERMISSIONS = Map.of(
+        "DOCTOR", List.of("/api/doctor"),
+        "PHARMACIST", List.of("/api/pharmacy"),
+        "MANAGER", List.of("/api/pharmacy"),
+        "ADMIN", List.of("/api/auth/admin")
+    );
+
+    private static final Set<String> RESTRICTED_PREFIXES = Set.of(
+        "/api/doctor",
+        "/api/pharmacy",
+        "/api/auth/admin"
+    );
+
+    private final Environment environment;
+
+    public GatewayJwtFilter(Environment environment) {
+        this.environment = environment;
+    }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -67,6 +83,12 @@ public class GatewayJwtFilter extends OncePerRequestFilter {
             String role = claims.get("role", String.class);
             if (userId == null || role == null) {
                 writeUnauthorized(response, "Token missing required claims");
+                return;
+            }
+
+            String path = request.getRequestURI();
+            if (isRestrictedPath(path) && !isRoleAllowed(role, path)) {
+                writeForbidden(response, "Insufficient role permissions");
                 return;
             }
 
@@ -100,7 +122,14 @@ public class GatewayJwtFilter extends OncePerRequestFilter {
         response.getWriter().write("{\"success\":false,\"error\":{\"code\":\"UNAUTHORIZED\",\"message\":\"" + message + "\",\"details\":null},\"timestamp\":\"" + java.time.Instant.now() + "\"}");
     }
 
+    private void writeForbidden(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setContentType("application/json");
+        response.getWriter().write("{\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"" + message + "\",\"details\":null},\"timestamp\":\"" + java.time.Instant.now() + "\"}");
+    }
+
     private PublicKey publicKey() {
+        String publicKeyB64 = environment.getProperty("JWT_EC_PUBLIC_KEY_B64");
         if (publicKeyB64 == null || publicKeyB64.isBlank()) {
             throw new JwtException("JWT_EC_PUBLIC_KEY_B64 is not configured");
         }
@@ -111,6 +140,38 @@ public class GatewayJwtFilter extends OncePerRequestFilter {
         } catch (Exception e) {
             throw new JwtException("Invalid EC public key", e);
         }
+    }
+
+    private static boolean isRestrictedPath(String path) {
+        for (String prefix : RESTRICTED_PREFIXES) {
+            if (matchesPrefix(path, prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isRoleAllowed(String role, String path) {
+        List<String> allowedPrefixes = ROLE_PREFIX_PERMISSIONS.get(role);
+        if (allowedPrefixes == null || allowedPrefixes.isEmpty()) {
+            return false;
+        }
+        for (String prefix : allowedPrefixes) {
+            if (matchesPrefix(path, prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean matchesPrefix(String path, String prefix) {
+        if (path == null) {
+            return false;
+        }
+        if (path.equals(prefix)) {
+            return true;
+        }
+        return path.startsWith(prefix + "/");
     }
 
     private static class HeaderMapRequestWrapper extends HttpServletRequestWrapper {
