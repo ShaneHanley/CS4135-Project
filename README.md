@@ -42,7 +42,7 @@ gateway-service :8080       ← JWT validation, header injection, routing
 | Messaging | PGMQ (Postgres-based message queue) |
 | Auth | JWT (EC key pair), BCrypt |
 | Notifications | Twilio (SMS), SendGrid (email) |
-| Container | Docker / Docker Compose |
+| Container | Docker / Docker Swarm |
 
 ---
 
@@ -72,7 +72,7 @@ gateway-service :8080       ← JWT validation, header injection, routing
 
 ### Prerequisites
 
-- Docker and Docker Compose
+- Docker with Swarm mode (single-node or multi-node)
 - A Supabase project (for PostgreSQL)
 - Twilio account (SMS notifications)
 - SendGrid account (email notifications)
@@ -111,11 +111,28 @@ cp .env.example .env
 
 ### 2. Start all services
 
+The stack is deployed via Docker Swarm, which handles health-checked startup ordering, 2-replica gateway redundancy, and graceful shutdown. This works identically on a local machine and in CI/CD.
+
+Initialise a swarm (once per machine):
+
 ```bash
-docker compose up --build
+docker swarm init
 ```
 
-The frontend will be available at `http://localhost:3000`.
+Build images and deploy the stack:
+
+```bash
+docker compose build
+docker stack deploy -c docker-compose.yml pharmacy-system
+```
+
+To tear down:
+
+```bash
+docker stack rm pharmacy-system
+```
+
+The frontend will be available at `http://localhost:3000` and the gateway at `http://localhost:8080` via Swarm ingress routing.
 
 ### 3. Demo users (pre-seeded)
 
