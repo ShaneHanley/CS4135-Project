@@ -26,7 +26,7 @@ gateway-service :8080       ← JWT validation, header injection, routing
       +---> notification-service  :8088  (SMS via Twilio, email via SendGrid)
 ```
 
-**Async messaging:** `prescription-service` publishes to a `prescription_created` PGMQ queue. `pharmacy-service` consumes from it and publishes status updates to `notification_prescription_status`. `notification-service` polls that queue and dispatches SMS/email to patients.
+**Async messaging:** `prescription-service` persists outbound messages in a transactional outbox, then a scheduler publishes to the `prescription_created` PGMQ queue (typically within a few seconds). `pharmacy-service` consumes from it and publishes status updates to `notification_prescription_status`. `notification-service` polls that queue and dispatches SMS/email to patients.
 
 **Database:** Supabase PostgreSQL — each service uses its own schema (schema-per-service isolation).
 
@@ -108,6 +108,32 @@ cp .env.example .env
 | `INVENTORY_SERVICE_URL` | Inventory service URL (default: `http://localhost:8085`) |
 | `BILLING_SERVICE_URL` | Billing service URL (default: `http://localhost:8086`) |
 | `ANALYTICS_SERVICE_URL` | Analytics service URL (default: `http://localhost:8087`) |
+| `APP_DEMO_USERS_ENABLED` | When `true`, auth-service seeds demo users at startup (default `false`) |
+| `DEMO_USER_PASSWORD` | Plaintext password used for all demo accounts when seeding is enabled |
+| `DEMO_DOCTOR_PASSWORD`, `DEMO_PHARMACIST_PASSWORD`, `DEMO_MANAGER_PASSWORD` | Optional per-account overrides |
+
+**Production and staging:** supply database credentials, JWT keys, and demo-seed passwords from your platform secrets manager as environment variables at container startup (same names as in `.env.example`). Do not bake secrets into images or committed files.
+
+### 1b. Pre-commit (gitleaks)
+
+Install [pre-commit](https://pre-commit.com/) and hook gitleaks so accidental credential commits are blocked locally:
+
+```bash
+pip install pre-commit
+pre-commit install
+pre-commit run --all-files
+```
+
+### 1c. Removing secrets from Git history (BFG Repo-Cleaner)
+
+If credentials were ever committed, rotating the secret is not enough; you must rewrite history so SonarQube and clones no longer contain the leaked material. Typical flow (run on a full clone or mirror, coordinate with your team):
+
+1. Install [BFG Repo-Cleaner](https://rtyley.github.io/bfg-repo-cleaner/) and clone a fresh **mirror**: `git clone --mirror <repo-url>`.
+2. Run BFG to delete the sensitive file(s) or use `--replace-text` for known patterns, for example: `java -jar bfg.jar --delete-files V2__seed_data.sql repo.git` (adjust to your case).
+3. In the bare repo: `git reflog expire --expire=now --all && git gc --prune=now --aggressive`.
+4. **Force-push** all branches and tags; notify everyone to re-clone or reset hard to the new history.
+
+Order matters if you combine this with new commits: finish history cleanup and force-push before layering new work, or rebase/cherry-pick onto the cleaned branch.
 
 ### 2. Start all services
 
@@ -134,7 +160,9 @@ docker stack rm pharmacy-system
 
 The frontend will be available at `http://localhost:3000` and the gateway at `http://localhost:8080` via Swarm ingress routing.
 
-### 3. Demo users (pre-seeded)
+### 3. Demo users (runtime seed, not in SQL)
+
+Demo accounts are **not** created by Flyway. Set `APP_DEMO_USERS_ENABLED=true` and `DEMO_USER_PASSWORD` in `.env` so `auth-service` inserts them on startup (fixed UUIDs align with prescription/pharmacy demo data).
 
 | Email | Role |
 |---|---|
@@ -161,7 +189,7 @@ The frontend will be available at `http://localhost:3000` and the gateway at `ht
 | Method | Path | Auth |
 |---|---|---|
 | GET | `/api/doctor/prescriptions` | Bearer JWT (DOCTOR) |
-| POST | `/api/doctor/prescriptions` | Bearer JWT (DOCTOR) |
+| POST | `/api/doctor/prescriptions` | Bearer JWT (DOCTOR), header `X-Idempotency-Key` required |
 | GET | `/api/doctor/prescriptions/{id}/status` | Bearer JWT (DOCTOR) |
 | GET | `/api/doctor/pharmacies` | Bearer JWT (DOCTOR) |
 

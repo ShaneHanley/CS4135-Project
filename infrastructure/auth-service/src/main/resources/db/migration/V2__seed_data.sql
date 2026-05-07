@@ -1,6 +1,14 @@
-INSERT INTO auth_svc.users (id, first_name, last_name, email, password_hash, role, active)
-VALUES
-  ('11111111-1111-1111-1111-111111111111', 'Demo', 'Doctor', 'doctor@demo.com', '***REMOVED***', 'DOCTOR', true),
-  ('22222222-2222-2222-2222-222222222222', 'Demo', 'Pharmacist', 'pharmacist@demo.com', '***REMOVED***', 'PHARMACIST', true),
-  ('33333333-3333-3333-3333-333333333333', 'Demo', 'Manager', 'manager@demo.com', '***REMOVED***', 'MANAGER', true)
-ON CONFLICT (email) DO NOTHING;
+-- Demo users are NOT inserted here (never commit bcrypt hashes or plaintext passwords).
+--
+-- For local development, enable runtime seeding and set passwords via environment variables:
+--   APP_DEMO_USERS_ENABLED=true
+--   DEMO_USER_PASSWORD=<shared password for all three demo accounts>
+--   Optional overrides: DEMO_DOCTOR_PASSWORD, DEMO_PHARMACIST_PASSWORD, DEMO_MANAGER_PASSWORD
+--
+-- The auth-service DemoUserSeeder creates these fixed UUIDs on startup when enabled (matches
+-- prescription_svc / pharmacy_svc demo seed rows):
+--   11111111-1111-1111-1111-111111111111  doctor@demo.com       DOCTOR
+--   22222222-2222-2222-2222-222222222222  pharmacist@demo.com PHARMACIST
+--   33333333-3333-3333-3333-333333333333  manager@demo.com    MANAGER
+--
+SELECT 1;
