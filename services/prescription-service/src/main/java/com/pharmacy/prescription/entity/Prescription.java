@@ -19,6 +19,7 @@ public class Prescription {
   private String rejectionReason;
   @Column(nullable = false) private int refillsAllowed;
   @Column(nullable = false) private int refillsUsed = 0;
+  @Column(name = "idempotency_key", length = 128) private String idempotencyKey;
   @Column(nullable = false) private Instant createdAt;
   @Column(nullable = false) private Instant updatedAt;
   @PrePersist public void onCreate(){ Instant now = Instant.now(); createdAt = now; updatedAt = now; if (status == null) status = PrescriptionStatus.NEW; }
@@ -36,5 +37,6 @@ public class Prescription {
   public String getRejectionReason(){ return rejectionReason; } public void setRejectionReason(String v){ rejectionReason=v; }
   public int getRefillsAllowed(){ return refillsAllowed; } public void setRefillsAllowed(int v){ refillsAllowed=v; }
   public int getRefillsUsed(){ return refillsUsed; } public void setRefillsUsed(int v){ refillsUsed=v; }
+  public String getIdempotencyKey(){ return idempotencyKey; } public void setIdempotencyKey(String v){ idempotencyKey=v; }
   public Instant getCreatedAt(){ return createdAt; } public Instant getUpdatedAt(){ return updatedAt; }
 }

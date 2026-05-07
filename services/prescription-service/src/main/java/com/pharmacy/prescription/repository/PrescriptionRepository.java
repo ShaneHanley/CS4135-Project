@@ -5,4 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface PrescriptionRepository extends JpaRepository<Prescription, UUID> {
   List<Prescription> findByDoctorId(String doctorId);
   Optional<Prescription> findByIdAndDoctorId(UUID id, String doctorId);
+  Optional<Prescription> findByDoctorIdAndIdempotencyKey(String doctorId, String idempotencyKey);
 }

@@ -127,10 +127,30 @@ class PrescriptionSecurityTest {
     // --- Validation: missing required fields → 400 ---
 
     @Test
+    void createPrescription_missingIdempotencyKey_returns400() throws Exception {
+        mockMvc.perform(post("/api/doctor/prescriptions")
+                        .header("X-User-Id", UUID.randomUUID().toString())
+                        .header("X-User-Role", "DOCTOR")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "patientId", "p1",
+                                "patientEmail", "p@p.com",
+                                "patientName", "Pat",
+                                "pharmacyId", "ph1",
+                                "medicationName", "Med",
+                                "dosage", "1mg",
+                                "instructions", "Take",
+                                "quantity", 1,
+                                "refillsAllowed", 0))))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void createPrescription_missingFields_returns400() throws Exception {
         mockMvc.perform(post("/api/doctor/prescriptions")
                         .header("X-User-Id", UUID.randomUUID().toString())
                         .header("X-User-Role", "DOCTOR")
+                        .header("X-Idempotency-Key", UUID.randomUUID().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of())))
                 .andExpect(status().isBadRequest());

@@ -32,7 +32,8 @@ export default function DoctorPage() {
   }, [dispatch]);
 
   const onSubmit = async (values) => {
-    const result = await dispatch(createPrescription(values));
+    const idempotencyKey = crypto.randomUUID();
+    const result = await dispatch(createPrescription({ idempotencyKey, ...values }));
     if (createPrescription.fulfilled.match(result)) {
       reset({ ...values, instructions: '', quantity: 1 });
     }

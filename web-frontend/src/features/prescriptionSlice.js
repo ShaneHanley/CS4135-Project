@@ -1,7 +1,13 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../api/client';
 export const fetchPrescriptions = createAsyncThunk('prescription/fetchPrescriptions', async () => (await api.get('/api/doctor/prescriptions')).data.data);
-export const createPrescription = createAsyncThunk('prescription/createPrescription', async (payload) => (await api.post('/api/doctor/prescriptions', payload)).data.data);
+export const createPrescription = createAsyncThunk(
+  'prescription/createPrescription',
+  async ({ idempotencyKey, ...payload }) =>
+    (await api.post('/api/doctor/prescriptions', payload, {
+      headers: { 'X-Idempotency-Key': idempotencyKey }
+    })).data.data
+);
 const slice = createSlice({
   name: 'prescription',
   initialState: { items: [], loading: false, error: null },
