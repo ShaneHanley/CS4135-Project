@@ -4,7 +4,13 @@ import { fetchPharmacyPrescriptions, updatePharmacyPrescriptionStatus } from '..
 import ErrorBanner from '../components/ErrorBanner';
 import LoadingSpinner from '../components/LoadingSpinner';
 
-const statuses = ['PROCESSING', 'READY_FOR_PICKUP', 'DISPENSED', 'REJECTED'];
+const ALLOWED_TRANSITIONS = {
+  NEW:              ['PROCESSING', 'REJECTED'],
+  PROCESSING:       ['READY_FOR_PICKUP', 'REJECTED'],
+  READY_FOR_PICKUP: ['DISPENSED', 'REJECTED'],
+  DISPENSED:        [],
+  REJECTED:         [],
+};
 
 export default function PharmacyPage() {
   const dispatch = useDispatch();
@@ -17,7 +23,9 @@ export default function PharmacyPage() {
   }, [dispatch]);
 
   const submit = async (id) => {
-    const status = statusById[id] || 'PROCESSING';
+    const prescription = items.find((p) => String(p.prescriptionId) === id);
+    const nextStatuses = ALLOWED_TRANSITIONS[prescription?.status] ?? [];
+    const status = statusById[id] || nextStatuses[0] || '';
     const rejectionReason = reasonById[id] || null;
     if (status === 'REJECTED' && !rejectionReason) {
       alert('Rejection reason is required for REJECTED status');
@@ -50,7 +58,9 @@ export default function PharmacyPage() {
         <tbody>
           {items.map((p) => {
             const id = String(p.prescriptionId);
-            const selected = statusById[id] || 'PROCESSING';
+            const nextStatuses = ALLOWED_TRANSITIONS[p.status] ?? [];
+            const selected = statusById[id] || nextStatuses[0] || '';
+            const isTerminal = nextStatuses.length === 0;
             return (
               <tr key={id}>
                 <td>{id}</td>
@@ -58,20 +68,26 @@ export default function PharmacyPage() {
                 <td>{p.medicationName}</td>
                 <td>{p.status}</td>
                 <td>
-                  <select value={selected} onChange={(e) => setStatusById((prev) => ({ ...prev, [id]: e.target.value }))}>
-                    {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  {selected === 'REJECTED' && (
-                    <input
-                      placeholder="Rejection reason"
-                      value={reasonById[id] || ''}
-                      onChange={(e) => setReasonById((prev) => ({ ...prev, [id]: e.target.value }))}
-                      style={{ marginLeft: '0.5rem' }}
-                    />
+                  {isTerminal ? (
+                    <span style={{ color: '#888' }}>—</span>
+                  ) : (
+                    <>
+                      <select value={selected} onChange={(e) => setStatusById((prev) => ({ ...prev, [id]: e.target.value }))}>
+                        {nextStatuses.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      {selected === 'REJECTED' && (
+                        <input
+                          placeholder="Rejection reason"
+                          value={reasonById[id] || ''}
+                          onChange={(e) => setReasonById((prev) => ({ ...prev, [id]: e.target.value }))}
+                          style={{ marginLeft: '0.5rem' }}
+                        />
+                      )}
+                      <button type="button" onClick={() => submit(id)} style={{ marginLeft: '0.5rem' }}>
+                        Update
+                      </button>
+                    </>
                   )}
-                  <button type="button" onClick={() => submit(id)} style={{ marginLeft: '0.5rem' }}>
-                    Update
-                  </button>
                 </td>
               </tr>
             );

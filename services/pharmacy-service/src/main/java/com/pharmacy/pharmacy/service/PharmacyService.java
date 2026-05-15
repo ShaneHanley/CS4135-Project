@@ -3,6 +3,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pharmacy.pharmacy.entity.PharmacyPrescription;
 import com.pharmacy.pharmacy.entity.PharmacyPrescriptionStatus;
+import com.pharmacy.pharmacy.exception.IllegalStateTransitionException;
 import com.pharmacy.messaging.PgmqService;
 import com.pharmacy.pharmacy.repository.PharmacyPrescriptionRepository;
 import org.slf4j.Logger;
@@ -16,6 +17,13 @@ import java.util.*;
 @Service
 public class PharmacyService {
   private static final Logger log = LoggerFactory.getLogger(PharmacyService.class);
+  private static final Map<PharmacyPrescriptionStatus, Set<PharmacyPrescriptionStatus>> ALLOWED_TRANSITIONS = Map.of(
+    PharmacyPrescriptionStatus.NEW,              EnumSet.of(PharmacyPrescriptionStatus.PROCESSING, PharmacyPrescriptionStatus.REJECTED),
+    PharmacyPrescriptionStatus.PROCESSING,       EnumSet.of(PharmacyPrescriptionStatus.READY_FOR_PICKUP, PharmacyPrescriptionStatus.REJECTED),
+    PharmacyPrescriptionStatus.READY_FOR_PICKUP, EnumSet.of(PharmacyPrescriptionStatus.DISPENSED, PharmacyPrescriptionStatus.REJECTED),
+    PharmacyPrescriptionStatus.DISPENSED,        EnumSet.noneOf(PharmacyPrescriptionStatus.class),
+    PharmacyPrescriptionStatus.REJECTED,         EnumSet.noneOf(PharmacyPrescriptionStatus.class)
+  );
   private final PharmacyPrescriptionRepository repository;
   private final PgmqService pgmqService;
   private final ObjectMapper objectMapper;
@@ -60,6 +68,9 @@ public class PharmacyService {
     PharmacyPrescription p = one(id);
     PharmacyPrescriptionStatus previous = p.getStatus();
     PharmacyPrescriptionStatus next = PharmacyPrescriptionStatus.valueOf(status);
+    if (!ALLOWED_TRANSITIONS.getOrDefault(previous, EnumSet.noneOf(PharmacyPrescriptionStatus.class)).contains(next)) {
+      throw new IllegalStateTransitionException(previous.name(), next.name());
+    }
     if (next == PharmacyPrescriptionStatus.REJECTED && (rejectionReason == null || rejectionReason.isBlank())) {
       throw new IllegalArgumentException("rejectionReason is required when status is REJECTED");
     }

@@ -6,6 +6,7 @@ import java.util.UUID;
 @Table(name = "pharmacy_prescriptions", schema = "pharmacy_svc")
 public class PharmacyPrescription {
   @Id @GeneratedValue private UUID id;
+  @Version private Long version;
   @Column(nullable = false, unique = true) private UUID prescriptionId;
   @Column(nullable = false) private String doctorId;
   @Column(nullable = false) private String patientId;
