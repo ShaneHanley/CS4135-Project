@@ -25,6 +25,14 @@ spring:
     schemas: prescription_svc
     default-schema: prescription_svc
     locations: classpath:db/migration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
 eureka:
   client:
     service-url:

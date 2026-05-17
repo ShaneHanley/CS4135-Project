@@ -8,7 +8,7 @@ spring:
     username: ${SUPABASE_DB_USER}
     password: ${SUPABASE_DB_PASSWORD}
     hikari:
-      maximum-pool-size: 3
+      maximum-pool-size: 1
   jpa:
     hibernate:
       ddl-auto: validate
@@ -22,3 +22,11 @@ spring:
     schemas: inventory_svc
     default-schema: inventory_svc
     locations: classpath:db/migration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

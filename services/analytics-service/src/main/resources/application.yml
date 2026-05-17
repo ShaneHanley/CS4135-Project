@@ -22,3 +22,11 @@ spring:
     schemas: analytics_svc
     default-schema: analytics_svc
     locations: classpath:db/migration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
