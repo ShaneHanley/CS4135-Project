@@ -2,6 +2,8 @@ FROM maven:3.9.9-eclipse-temurin-21 AS build
 WORKDIR /workspace
 COPY common-libs/common-messaging /workspace/common-libs/common-messaging
 RUN mvn -q -DskipTests -f /workspace/common-libs/common-messaging/pom.xml install
+COPY services/prescription-service/pom.xml /workspace/services/prescription-service/pom.xml
+RUN mvn -q -DskipTests -f /workspace/services/prescription-service/pom.xml dependency:go-offline dependency:resolve-plugins
 COPY services/prescription-service /workspace/services/prescription-service
 RUN mvn -q -DskipTests -f /workspace/services/prescription-service/pom.xml clean package
 
