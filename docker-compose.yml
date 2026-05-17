@@ -1,5 +1,6 @@
 services:
   discovery-service:
+    image: cs4135-project-discovery-service:latest
     build: ./infrastructure/discovery-service
     ports:
       - "8761:8761"
@@ -9,10 +10,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 300s
     stop_grace_period: 30s
 
   config-server:
+    image: cs4135-project-config-server:latest
     build: ./infrastructure/config-server
     ports:
       - "8888:8888"
@@ -22,17 +24,17 @@ services:
     volumes:
       - ./infrastructure/config-repo:/config-repo:ro
     depends_on:
-      discovery-service:
-        condition: service_healthy
+      - discovery-service
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 300s
     stop_grace_period: 30s
 
   gateway-service:
+    image: cs4135-project-gateway-service:latest
     build: ./infrastructure/gateway-service
     ports:
       - "8080"
@@ -48,30 +50,21 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka
       CONFIG_SERVER_URL: http://config-server:8888
     depends_on:
-      discovery-service:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-      auth-service:
-        condition: service_healthy
-      prescription-service:
-        condition: service_healthy
-      pharmacy-service:
-        condition: service_healthy
-      patient-service:
-        condition: service_healthy
-      inventory-service:
-        condition: service_healthy
-      billing-service:
-        condition: service_healthy
-      analytics-service:
-        condition: service_healthy
+      - discovery-service
+      - config-server
+      - auth-service
+      - prescription-service
+      - pharmacy-service
+      - patient-service
+      - inventory-service
+      - billing-service
+      - analytics-service
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 300s
     stop_grace_period: 30s
     deploy:
       replicas: 2
@@ -80,6 +73,7 @@ services:
           memory: 512M
 
   auth-service:
+    image: cs4135-project-auth-service:latest
     build: ./infrastructure/auth-service
     ports:
       - "8081:8081"
@@ -88,19 +82,18 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka
       CONFIG_SERVER_URL: http://config-server:8888
     depends_on:
-      discovery-service:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
+      - discovery-service
+      - config-server
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 300s
     stop_grace_period: 30s
 
   prescription-service:
+    image: cs4135-project-prescription-service:latest
     build:
       context: .
       dockerfile: services/prescription-service/Dockerfile
@@ -111,19 +104,18 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka
       CONFIG_SERVER_URL: http://config-server:8888
     depends_on:
-      discovery-service:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
+      - discovery-service
+      - config-server
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 300s
     stop_grace_period: 30s
 
   pharmacy-service:
+    image: cs4135-project-pharmacy-service:latest
     build:
       context: .
       dockerfile: services/pharmacy-service/Dockerfile
@@ -134,19 +126,18 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka
       CONFIG_SERVER_URL: http://config-server:8888
     depends_on:
-      discovery-service:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
+      - discovery-service
+      - config-server
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 300s
     stop_grace_period: 30s
 
   patient-service:
+    image: cs4135-project-patient-service:latest
     build:
       context: .
       dockerfile: services/patient-service/Dockerfile
@@ -158,10 +149,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 300s
     stop_grace_period: 30s
 
   inventory-service:
+    image: cs4135-project-inventory-service:latest
     build:
       context: .
       dockerfile: services/inventory-service/Dockerfile
@@ -173,10 +165,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 300s
     stop_grace_period: 30s
 
   billing-service:
+    image: cs4135-project-billing-service:latest
     build:
       context: .
       dockerfile: services/billing-service/Dockerfile
@@ -188,10 +181,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 300s
     stop_grace_period: 30s
 
   analytics-service:
+    image: cs4135-project-analytics-service:latest
     build:
       context: .
       dockerfile: services/analytics-service/Dockerfile
@@ -203,10 +197,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 300s
     stop_grace_period: 30s
 
   notification-service:
+    image: cs4135-project-notification-service:latest
     build:
       context: .
       dockerfile: services/notification-service/Dockerfile
@@ -225,23 +220,21 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka
       CONFIG_SERVER_URL: http://config-server:8888
     depends_on:
-      discovery-service:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
+      - discovery-service
+      - config-server
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 300s
     stop_grace_period: 30s
 
   web-frontend:
+    image: cs4135-project-web-frontend:latest
     build: ./web-frontend
     ports:
       - "3000:80"
     env_file: .env
     depends_on:
-      gateway-service:
-        condition: service_healthy
+      - gateway-service
