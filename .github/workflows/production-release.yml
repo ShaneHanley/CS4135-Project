@@ -1,0 +1,147 @@
+name: Pharmacy Management Prescription Tracking System CI/CD
+on:
+  push:
+      branches: [ "main" ] # Triggers the pipeline automatically on push to main
+
+env:
+  DOCKER_ORG: ${{ secrets.DOCKER_USERNAME }}
+
+jobs:
+  # ==========================================
+  # JOB 1: BACKEND MATRIX BUILD
+  # ==========================================
+  build-backends:
+    name: Build & Push Spring Boot Services
+    runs-on: ubuntu-latest
+    strategy:
+      # A matrix allows us to run this exact job in parallel for each service!
+      matrix:
+        include:
+          - service: discovery-service
+            path: infrastructure/discovery-service
+            context: ./infrastructure/discovery-service
+          - service: config-server
+            path: infrastructure/config-server
+            context: ./infrastructure/config-server
+          - service: gateway-service
+            path: infrastructure/gateway-service
+            context: ./infrastructure/gateway-service
+          - service: auth-service
+            path: infrastructure/auth-service
+            context: ./infrastructure/auth-service
+          - service: prescription-service
+            path: services/prescription-service
+            context: .
+          - service: pharmacy-service
+            path: services/pharmacy-service
+            context: .
+          - service: patient-service
+            path: services/patient-service
+            context: .
+          - service: inventory-service
+            path: services/inventory-service
+            context: .
+          - service: billing-service
+            path: services/billing-service
+            context: .
+          - service: analytics-service
+            path: services/analytics-service
+            context: .
+          - service: notification-service
+            path: services/notification-service
+            context: .
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 🧪 Test and Build JAR (${{ matrix.service }})
+      # Navigate into the specific service folder to run Maven
+        run: |
+          cd ${{ matrix.path }}
+          mvn clean package -DskipTests # Remove -DskipTests when your unit tests are ready!
+
+      - name: 🐳 Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 📦 Build and Push Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context == '.' && format('{0}/Dockerfile', matrix.path) || format('{0}/Dockerfile', matrix.context) }}
+          push: true
+          tags: ${{ env.DOCKER_ORG }}/cs4135-project-${{ matrix.service }}:latest
+
+# ==========================================
+# JOB 2: FRONTEND BUILD
+# ==========================================
+  build-frontend:
+    name: Build & Push React SPA
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: 🐳 Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: 📦 Build and Push React Image
+      uses: docker/build-push-action@v4
+      with:
+        # The Dockerfile in /web-frontend handles the Node build and NGINX setup
+        context: ./web-frontend
+        push: true
+        tags: ${{ env.DOCKER_ORG }}/cs4135-project-web-frontend:latest
+
+# ==========================================
+# JOB 3: PRODUCTION DEPLOYMENT
+# ==========================================
+  deploy-to-prod:
+    name: Deploy via SSH to VPS
+    # This ensures deployment ONLY happens if both build jobs succeed
+    needs: [build-backends, build-frontend]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code (To get docker-compose.yml)
+        uses: actions/checkout@v3
+
+      - name: Secure Copy (SCP) Compose File to Server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: ${{ secrets.PROD_SERVER_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          source: "docker-compose.yml"
+          target: "/opt/pharmacy-system"
+
+      - name: 🚀 Execute Deployment on Server
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: ${{ secrets.PROD_SERVER_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          envs: DOCKER_ORG
+          script: |
+            echo "Successfully connected to Production Server!"
+            cd /opt/pharmacy-system
+
+            # Pull the freshest images we just pushed to Docker Hub
+            docker stack deploy -c docker-compose.yml pharmacy-system --with-registry-auth
+
+            # Clean up dangling images to prevent the server disk from filling up
+            docker image prune -f
+            echo "Deployment Complete!"

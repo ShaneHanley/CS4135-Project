@@ -1,6 +1,6 @@
 services:
   discovery-service:
-    image: cs4135-project-discovery-service:latest
+    image: ${DOCKER_ORG}/cs4135-project-discovery-service:latest
     build: ./infrastructure/discovery-service
     ports:
       - "8761:8761"
@@ -14,7 +14,7 @@ services:
     stop_grace_period: 30s
 
   config-server:
-    image: cs4135-project-config-server:latest
+    image: ${DOCKER_ORG}/cs4135-project-config-server:latest
     build: ./infrastructure/config-server
     ports:
       - "8888:8888"
@@ -34,7 +34,7 @@ services:
     stop_grace_period: 30s
 
   gateway-service:
-    image: cs4135-project-gateway-service:latest
+    image: ${DOCKER_ORG}/cs4135-project-gateway-service:latest
     build: ./infrastructure/gateway-service
     ports:
       - "8080"
@@ -73,7 +73,7 @@ services:
           memory: 512M
 
   auth-service:
-    image: cs4135-project-auth-service:latest
+    image: ${DOCKER_ORG}/cs4135-project-auth-service:latest
     build: ./infrastructure/auth-service
     ports:
       - "8081:8081"
@@ -93,7 +93,7 @@ services:
     stop_grace_period: 30s
 
   prescription-service:
-    image: cs4135-project-prescription-service:latest
+    image: ${DOCKER_ORG}/cs4135-project-prescription-service:latest
     build:
       context: .
       dockerfile: services/prescription-service/Dockerfile
@@ -115,7 +115,7 @@ services:
     stop_grace_period: 30s
 
   pharmacy-service:
-    image: cs4135-project-pharmacy-service:latest
+    image: ${DOCKER_ORG}/cs4135-project-pharmacy-service:latest
     build:
       context: .
       dockerfile: services/pharmacy-service/Dockerfile
@@ -137,7 +137,7 @@ services:
     stop_grace_period: 30s
 
   patient-service:
-    image: cs4135-project-patient-service:latest
+    image: ${DOCKER_ORG}/cs4135-project-patient-service:latest
     build:
       context: .
       dockerfile: services/patient-service/Dockerfile
@@ -153,7 +153,7 @@ services:
     stop_grace_period: 30s
 
   inventory-service:
-    image: cs4135-project-inventory-service:latest
+    image: ${DOCKER_ORG}/cs4135-project-inventory-service:latest
     build:
       context: .
       dockerfile: services/inventory-service/Dockerfile
@@ -169,7 +169,7 @@ services:
     stop_grace_period: 30s
 
   billing-service:
-    image: cs4135-project-billing-service:latest
+    image: ${DOCKER_ORG}/cs4135-project-billing-service:latest
     build:
       context: .
       dockerfile: services/billing-service/Dockerfile
@@ -185,7 +185,7 @@ services:
     stop_grace_period: 30s
 
   analytics-service:
-    image: cs4135-project-analytics-service:latest
+    image: ${DOCKER_ORG}/cs4135-project-analytics-service:latest
     build:
       context: .
       dockerfile: services/analytics-service/Dockerfile
@@ -201,7 +201,7 @@ services:
     stop_grace_period: 30s
 
   notification-service:
-    image: cs4135-project-notification-service:latest
+    image: ${DOCKER_ORG}/cs4135-project-notification-service:latest
     build:
       context: .
       dockerfile: services/notification-service/Dockerfile
@@ -231,7 +231,7 @@ services:
     stop_grace_period: 30s
 
   web-frontend:
-    image: cs4135-project-web-frontend:latest
+    image: ${DOCKER_ORG}/cs4135-project-web-frontend:latest
     build: ./web-frontend
     ports:
       - "3000:80"
