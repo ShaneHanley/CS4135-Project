@@ -65,6 +65,7 @@ jobs:
       - name: 🧪 Test and Build JAR (${{ matrix.service }})
       # Navigate into the specific service folder to run Maven
         run: |
+          mvn -q -DskipTests -f common-libs/common-messaging/pom.xml install
           cd ${{ matrix.path }}
           mvn clean package -DskipTests # Remove -DskipTests when your unit tests are ready!
 
