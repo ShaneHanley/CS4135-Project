@@ -18,6 +18,7 @@ spring:
       hibernate.default_schema: pharmacy_svc
   flyway:
     enabled: true
+    validate-on-migrate: false
     url: ${SUPABASE_MIGRATION_URL}
     user: ${SUPABASE_DB_USER}
     password: ${SUPABASE_DB_PASSWORD}
