@@ -106,6 +106,8 @@ jobs:
         context: ./web-frontend
         push: true
         tags: ${{ env.DOCKER_ORG }}/cs4135-project-web-frontend:latest
+        build-args: |
+          VITE_API_BASE_URL=${{ secrets.PROD_API_URL }}
 
 # ==========================================
 # JOB 3: PRODUCTION DEPLOYMENT
